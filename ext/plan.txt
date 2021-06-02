@@ -1,0 +1,43 @@
+add bill entry to the members table
+
+
+add a finances table
+...........................................................
+| entry_id | amount    | date         | transaction_type  |
+...........................................................
+|          |           |              |                   |
+| 1	       |  2000     | 24-mar-2021  | 1                 |
+|          |           |              |                   |
+...........................................................
+
+Add a transaction type table
+
+.....................................
+|               |                   |
+|transaction_id | name              |
+|               |                   |
+.....................................
+|               |                   |
+| 1             | reg_fee           |
+|               |                   |
+.....................................
+|               |                   |
+| 2             | borrowing_charges |
+|               |                   |
+.....................................
+|               |                   |
+| 3             | fine_charge       |
+|               |                   |
+.....................................
+
+
+
+Report will consist of all the transaction then all the damaged and lost videos
+Then a count of the videos and the number of member (total && this_month)
+
+
+App file structure
+
+> /ext
+    > upepeo.sqlite
+> upepeo.exe
