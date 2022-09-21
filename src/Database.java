@@ -1,20 +1,14 @@
-import java.io.*;
 import java.sql.*;
 import java.time.LocalDate;
 
 public class Database {
-
     private Connection conn = null;
     private Connection updateConnection = null;
-    String url = "jdbc:sqlite:/home/leo/Documents/job_one/ext/upepeo.sqlite";
-    Database(){
-
-        System.out.println(this.url);
+    private static String url;
+    Database(String dbPath){
+        Database.url = String.format("jdbc:sqlite:%s", dbPath);
         try {
-            //Class.forName("org.sqlite.JDBC");
-            // db parameters
-            // create a connection to the database
-            conn = DriverManager.getConnection(this.url);
+            conn = DriverManager.getConnection(Database.url);
             System.out.println("Connection to SQLite has been established.");
         } catch (SQLException e) {
             System.out.println(e.getMessage());
@@ -24,7 +18,7 @@ public class Database {
         }
 
         try {
-            this.updateConnection = DriverManager.getConnection(this.url);
+            this.updateConnection = DriverManager.getConnection(Database.url);
             System.out.println("Update connection has been established");
         }catch (SQLException e){
             System.out.println(e.getMessage());
@@ -35,7 +29,7 @@ public class Database {
 
     private void openUpdateConnection(){
         try {
-            this.updateConnection = DriverManager.getConnection(this.url);
+            this.updateConnection = DriverManager.getConnection(Database.url);
             System.out.println("Update connection has been established");
         }catch (SQLException e){
             System.out.println(e.getMessage());
@@ -52,10 +46,7 @@ public class Database {
     }
     private void openConnection(){
         try {
-            // db parameters
-            // create a connection to the database
-            conn = DriverManager.getConnection(this.url);
-
+            conn = DriverManager.getConnection(Database.url);
         } catch (SQLException e) {
             System.out.println(e.getMessage());
         }

@@ -2,9 +2,7 @@ import javax.swing.*;
 import java.util.HashMap;
 
 public class VideoRegister {
-    
-    Database db = new Database();
-    //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    private final Database db;
     public JPanel VideoRegister;
     private JTextField videoName;
     private JButton submitButton;
@@ -12,13 +10,9 @@ public class VideoRegister {
     private JLabel videoNameError;
     private JLabel submitError;
     public JButton backButton;
-    //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-    private void createUIComponents() {
-        // TODO: place custom component creation code here
-    }
-
-    VideoRegister(){
+    VideoRegister(Database database){
+        this.db = database;
         setAllInvisible();
         check_credentials();
     }

@@ -1,17 +1,10 @@
-import javax.imageio.ImageIO;
 import javax.swing.*;
-import java.awt.*;
-import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.regex.Pattern;
 
 public class MemberRegister {
-
-
-
-    Database db = new Database();
-    // $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+    private final Database db;
     public JPanel memberRegister;
     private JTextField firstName;
     private JButton submitButton;
@@ -35,10 +28,8 @@ public class MemberRegister {
     private final JTextField[] fields = {
             firstName, surname, phoneNumber, nationalID, resAddress, occupation};
 
-    // $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-
-
-    MemberRegister() throws IOException {
+    MemberRegister(Database database){
+        this.db = database;
         setAllErrorsInvisible();
         addEventListeners();
     }
@@ -149,8 +140,6 @@ public class MemberRegister {
             return false;
         }
 
-        //check if unique
-
         if (!db.isUnique(in, "members", "national_id")){
             IDError.setVisible(true);
             IDError.setText("ID number is already in use");
@@ -182,9 +171,5 @@ public class MemberRegister {
     private void clearAll(){
         for(JTextField field: fields)
             field.setText("");
-    }
-
-    private void createUIComponents() {
-        // TODO: place custom component creation code here
     }
 }

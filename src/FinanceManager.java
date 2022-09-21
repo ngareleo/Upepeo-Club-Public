@@ -1,9 +1,7 @@
 import javax.swing.*;
 
 public class FinanceManager {
-    Database db = new Database();
-
-    /// #####################################################################################################################
+    private final Database db;
     private JButton refreshButton;
     private JButton generateReportButton;
     public JPanel FinanceManager;
@@ -21,27 +19,20 @@ public class FinanceManager {
     private JLabel totalAmount;
     private JLabel devAmount;
     private JButton exitButton;
-    /// #####################################################################################################################
     final private JLabel[] errors = {userError, dataBaseError};
 
-
-
-
-    FinanceManager(){
+    FinanceManager(Database database){
+        this.db = database;
         prepareFinanceTab();
-
-
         clearBillButton.addActionListener(e -> {
             clearBillPanel.setVisible(true);
             mainPanel.setVisible(false);
         });
 
-
         exitButton.addActionListener( e -> {
             clearBillPanel.setVisible(false);
             mainPanel.setVisible(true);
         });
-
 
         clearBillButton_m.addActionListener( e -> {
             int amount = db.getBill(membershipNumber.getText().trim());
@@ -65,7 +56,7 @@ public class FinanceManager {
             }
         });
         generateReportButton.addActionListener( e -> {
-
+            // TODO: Add action
         });
     }
 
