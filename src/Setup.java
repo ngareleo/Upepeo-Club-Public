@@ -23,7 +23,7 @@ public class Setup {
                     "('Drama', 55, 45)," +
                     "('Cartoon', 80, 48);";
 
-    // TODO: configure the Database.class
+    // TODO: configure the Connections.Database.class
     String video_status_setup =
             "CREATE TABLE video_status (" +
                     "status_id INTEGER NOT NULL," +

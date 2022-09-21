@@ -13,8 +13,8 @@ The file structure is critical to the functioning of the app
         \META-INF
             MANIFEST.mf
         App.java
-        Database.java
-        Include.java
+        Connections.Database.java
+        Tools.Tools.java
         Setup.java
         BorrowVideo.java
         BorrowVideo.form
