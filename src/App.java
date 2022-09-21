@@ -1,25 +1,27 @@
+import Connections.Database;
+import LandingPanel.LandingPage;
+import Strings.MainAppStrings;
 import javax.swing.*;
 import java.io.File;
-import java.io.IOException;
 
 public class App extends JFrame {
-    LandingPage landingPage;
+
+    private final JPanel landingPanel;
 
     App(Database database) {
-        landingPage = new LandingPage(this);
-        JPanel landing_panel = landingPage.landingPage;
+        LandingPage landingPage = new LandingPage(this);
+        landingPanel = landingPage.landingPage;
         landingPage.initializeTabs(database);
-        initial_setup(landing_panel);
+        initial_setup();
         landingPage.add_eventListener();
         final_setup();
     }
 
-
-    void initial_setup(JPanel landing_panel){
-        setTitle("Upepeo Club");
+    void initial_setup(){
+        setTitle(MainAppStrings.appTitle);
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setSize(700, 600);
-        add(landing_panel);
+        add(landingPanel);
     }
 
     void final_setup(){
@@ -27,7 +29,7 @@ public class App extends JFrame {
         setVisible(true);
     }
 
-    public static void main(String[] args) throws ClassNotFoundException, UnsupportedLookAndFeelException, InstantiationException, IllegalAccessException, IOException {
+    public static void main(String[] args) throws ClassNotFoundException, UnsupportedLookAndFeelException, InstantiationException, IllegalAccessException {
         String dbFileLocation = "./res/upepeo.sqlite";
         String jdbcUrl = String.format("jdbc:sqlite:%s", dbFileLocation);
         File dbFile = new File(dbFileLocation);

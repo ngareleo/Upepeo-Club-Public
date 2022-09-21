@@ -1,0 +1,8 @@
+package Strings;
+
+public class Strings {
+    public static final String kshMoneyFormat = "Ksh %d.00";
+    public static final String internalError = "Internal error occurred";
+    public static final String NO_TEXT = "";
+}
+

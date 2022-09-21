@@ -1,8 +1,11 @@
+package BorrowVideoPanel;
+
+import Connections.Database;
+import Tools.Utils;
 import javax.swing.*;
 import java.awt.*;
 import java.time.LocalDate;
 import java.time.Period;
-import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class BorrowVideo {
@@ -10,7 +13,7 @@ public class BorrowVideo {
     String mem_num;
     String[] video_information;
     Boolean lost, damaged;
-    private final Database db;
+    private final Database database;
     public JPanel BorrowVideo;
     private JTextField searchBar;
     private JButton searchButton;
@@ -40,9 +43,10 @@ public class BorrowVideo {
     private JLabel sideInfo;
     private final JLabel[] allErrors = {dbError, memUserError, searchDatabaseError, searchUserError, borrowingError, sideInfo};
     private final JTextField[] allTexts = {searchBar, membershipNumber};
+    private final String[] choices = {"Pay Now", "Add to Bill"};
 
-    BorrowVideo(Database database){
-        this.db = database;
+    public BorrowVideo(Database database){
+        this.database = database;
         authenticateUser();
     }
 
@@ -87,23 +91,23 @@ public class BorrowVideo {
             String user_mem_id = membershipNumber.getText().trim();
             if(user_mem_id.trim().equals("")){
                 memUserError.setVisible(true);
-                memUserError.setText("Membership ID is required");
+                memUserError.setText(BorrowVideoStrings.memberIDMissingErrorText);
                 return;
             }
             System.out.printf("Mem : %s\n", user_mem_id);
-            user_id = db.getUserId(user_mem_id);
+            user_id = database.getUserId(user_mem_id);
             this.mem_num = user_mem_id;
             if(user_id == -2){
                 dbError.setIcon(imageIcon);
-                dbError.setText("Member not found");
-                System.out.println("Member not found");
+                dbError.setText(BorrowVideoStrings.memberNotFoundErrorText);
+                System.out.println(BorrowVideoStrings.memberNotFoundErrorText); // TODO: Introduce logger
                 dbError.setVisible(true);
                 return;
             }else if(user_id == -1){
                 dbError.setIcon(imageIcon);
                 dbError.setVisible(true);
-                System.out.println("Server Error, please retry");
-                dbError.setText("Server Error, please retry");
+                System.out.println(BorrowVideoStrings.backendErrorText);
+                dbError.setText(BorrowVideoStrings.backendErrorText);
                 return;
             }else{
                 this.user_id = user_id;
@@ -120,13 +124,12 @@ public class BorrowVideo {
     }
 
     private void init(){
-
         prepareReturnPanel();
         resultPanel.setVisible(false);
         backButton.setVisible(true);
         backButton.addActionListener( e -> {
             clearAll();
-            JOptionPane.showMessageDialog(BorrowVideo, "Leaving video management");
+            JOptionPane.showMessageDialog(BorrowVideo, BorrowVideoStrings.videoManagementExitText);
             authenticateUser();
         });
 
@@ -137,18 +140,18 @@ public class BorrowVideo {
             prepareReturnPanel();
             String query = searchBar.getText().trim();
             if(query.equals("")){
-                searchUserError.setText("Fill the search bar to search video");
+                searchUserError.setText(BorrowVideoStrings.searchBarPlaceholderText);
                 searchUserError.setVisible(true);
                 return;
             }
-            this.num_of_pending_videos = db.checkPendingVideos(this.user_id);
-            video_info = db.getVideoInformation(query);
+            this.num_of_pending_videos = database.checkPendingVideos(this.user_id);
+            video_info = database.getVideoInformation(query);
             if(video_info[0] == null){
-                searchDatabaseError.setText("Video not found");
+                searchDatabaseError.setText(BorrowVideoStrings.videoNotFoundText);
                 searchDatabaseError.setVisible(true);
                 return;
             }else if(video_info[0].equals("-1")){
-                searchDatabaseError.setText("Internal Database Error");
+                searchDatabaseError.setText(BorrowVideoStrings.backendErrorText);
                 searchDatabaseError.setVisible(true);
                 return;
             }else{
@@ -156,7 +159,6 @@ public class BorrowVideo {
             }
             populateVideoSearchPanel();
         });
-
 
         returnButton.addActionListener( e -> {
             int video_st = 1;
@@ -174,24 +176,24 @@ public class BorrowVideo {
             StringBuilder videoReport = new StringBuilder();
             int res = 0;
             if(this.damaged){
-                videoReport.append("Video is damaged. ");
+                videoReport.append(BorrowVideoStrings.videoStatusDamagedText);
                 video_st = 2;
             }
 
             if (this.lost){
-                videoReport.append("Video is lost. ");
+                videoReport.append(BorrowVideoStrings.videoStatusLostText);
                 video_st = 3;
             }
             if(!(this.lost || this.damaged))
-                videoReport.append("Video is okay. ");
-            res = db.returnVideo(Integer.parseInt(this.video_information[0]), String.valueOf(videoReport), video_st);
+                videoReport.append(BorrowVideoStrings.videoStatusNormalText);
+            res = database.returnVideo(Integer.parseInt(this.video_information[0]), String.valueOf(videoReport), video_st);
             if(res != 1){
-                borrowingError.setText("Database error occurred");
+                borrowingError.setText(BorrowVideoStrings.backendErrorText);
                 borrowingError.setVisible(true);
                 return;
             }
-            Object[] choices = {"Pay Now", "Add to Bill"};
-            Object defaultChoice = choices[0];
+
+            String defaultChoice = choices[0];
             int option = JOptionPane.showOptionDialog(BorrowVideo,
                     "Select one of the values",
                     "Title message",
@@ -201,52 +203,51 @@ public class BorrowVideo {
                     choices,
                     defaultChoice);
             if(option == 0){
-                db.carryTransaction(this.borrowing_rate, 2);
+                database.carryTransaction(this.borrowing_rate, 2);
             }else {
-                db.addToBill(this.borrowing_rate, this.mem_num);
+                database.addToBill(this.borrowing_rate, this.mem_num);
             }
-            JOptionPane.showMessageDialog(BorrowVideo, "video was returned successfully");
+            JOptionPane.showMessageDialog(BorrowVideo, BorrowVideoStrings.videoReturnSuccessText);
             init();
         });
 
 
         borrowButton.addActionListener( e -> {
             if(this.num_of_pending_videos == 5){
-                borrowingError.setText("You have exceeded your capacity to borrow videos");
+                borrowingError.setText(BorrowVideoStrings.videoCapacityExceededText);
                 borrowingError.setVisible(true);
                 return;
             }
             int res = 0;
             if(!this.video_information[2].equals("1")){
-                borrowingError.setText("Video is not available for borrowing");
+                borrowingError.setText(BorrowVideoStrings.videoUnavailableText);
                 borrowingError.setVisible(true);
                 return;
             }
-            Object[] choices = {"Pay Now", "Add to Bill"};
-            Object defaultChoice = choices[0];
+            String defaultChoice = this.choices[0];
             int option = JOptionPane.showOptionDialog(BorrowVideo,
                     "Select one of the values",
                     "Title message",
                     JOptionPane.YES_NO_OPTION,
                     JOptionPane.QUESTION_MESSAGE,
                     null,
-                    choices,
+                    this.choices,
                     defaultChoice);
             if(option == 0){
-                db.carryTransaction(this.borrowing_rate, 2);
+                database.carryTransaction(this.borrowing_rate, 2);
             }else {
-                db.addToBill(this.borrowing_rate, this.mem_num);
+                database.addToBill(this.borrowing_rate, this.mem_num);
             }
             AtomicInteger confirm = new AtomicInteger();
             if(confirm.get() == 0){
-                res = db.borrowVideo(Integer.parseInt(this.video_information[0]), user_id);
+                res = database.borrowVideo(Integer.parseInt(this.video_information[0]), user_id);
             }else{return;}
             if(res != 1){
-                borrowingError.setText("Database error occurred");
+                borrowingError.setText(BorrowVideoStrings.backendErrorText);
                 borrowingError.setVisible(true);
                 return;
             }
-            JOptionPane.showMessageDialog(BorrowVideo, "video borrowed successfully");
+            JOptionPane.showMessageDialog(BorrowVideo, BorrowVideoStrings.videoBorrowedSuccessText);
             init();
         });
     }
@@ -264,17 +265,16 @@ public class BorrowVideo {
 
     private void populateVideoSearchPanel() {
         turnOn();
-        System.out.println("Enter");
         resultPanel.setVisible(true);
         this.total_charge = 0;
         this.lost = false;
         this.damaged = false;
         boolean lost = false;
         String[] videoInformation = this.video_information;
-        this.borrowing_rate = Include.getBorrowingRate().get(Integer.parseInt(videoInformation[1]));
-        this.fine_rate = Include.getFineRate().get(Integer.parseInt(videoInformation[1]));
-        String videoCategory = Include.getCategoryName().get(Integer.parseInt(videoInformation[1])),
-                video_status = Include.getStatusInfo().get(Integer.parseInt(videoInformation[2]));
+        this.borrowing_rate = Utils.getBorrowingRate().get(Integer.parseInt(videoInformation[1]));
+        this.fine_rate = Utils.getFineRate().get(Integer.parseInt(videoInformation[1]));
+        String videoCategory = Utils.getCategoryName().get(Integer.parseInt(videoInformation[1])),
+                video_status = Utils.getStatusInfo().get(Integer.parseInt(videoInformation[2]));
         if(videoInformation[2].equals("4") && Integer.parseInt(videoInformation[4]) == this.user_id){
             borrowButton.setVisible(false);
             returnButton.setVisible(true);
@@ -285,17 +285,17 @@ public class BorrowVideo {
             else due_days = 0;
             if(due_days > 3) due_days -= 3;
             if(lost){
-                sideInfo.setText("Video is overdue 14 days so it was reported lost attracting a fee of ksh 700");
+                sideInfo.setText(BorrowVideoStrings.lateVideoText);
                 this.total_charge += 700;
             }
-            overdueDays.setText(due_days + " days");
+            overdueDays.setText(due_days + "%s days");
             this.total_charge += due_days * this.fine_rate;
-            videoPriceLabel.setText(String.format("Ksh %d.00", this.total_charge));
+            videoPriceLabel.setText(String.format(BorrowVideoStrings.kshMoneyFormat, this.total_charge));
             reportPanel.setVisible(true);
 
         }else{
             returnButton.setVisible(false);
-            videoPriceLabel.setText(String.format("Ksh %d.00", this.borrowing_rate));
+            videoPriceLabel.setText(String.format(BorrowVideoStrings.kshMoneyFormat, this.borrowing_rate));
         }
         if (this.video_information[2].equals("1")){
             videoStatus.setText(video_status);
