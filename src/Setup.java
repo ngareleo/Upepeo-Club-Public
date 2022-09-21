@@ -1,10 +1,6 @@
-import java.io.File;
-import java.io.IOException;
 import java.sql.*;
 
 public class Setup {
-
-    // TODO: setup the DB (Upepeo.db)
     String categories_setup =
             "CREATE TABLE categories (" +
                     "category_id INTEGER NOT NULL," +
@@ -172,16 +168,16 @@ public class Setup {
                     "('It', 5, 18, 2017, 135);";
 
     private Connection conn = null;
-    String url = "jdbc:sqlite:./res/sample.db";
 
-    Setup(){
-        System.out.println(this.url);
-        openConnection();
+    Setup(String dbFileLocation){
+        openConnection(dbFileLocation);
         System.out.println("#################################################");
         System.out.println("#                                               #");
         System.out.println("#         Initial Connection established        #");
         System.out.println("#                                               #");
         System.out.println("#################################################\n");
+        System.out.println("Creating tables...");
+        this.createDB(dbFileLocation);
         closeConnection();
         System.out.println("#################################################");
         System.out.println("#                                               #");
@@ -189,11 +185,9 @@ public class Setup {
         System.out.println("#                                               #");
         System.out.println("#################################################\n");
     }
-    private void openConnection(){
+    private void openConnection(String url){
         try {
-            // db parameters
-            // create a connection to the database
-            conn = DriverManager.getConnection(this.url);
+            conn = DriverManager.getConnection(url);
         } catch (SQLException e) {
             System.out.println(e.getMessage());
         }
@@ -211,8 +205,8 @@ public class Setup {
         }
     }
 
-    private void createDB(){
-        this.openConnection();
+    private void createDB(String dbFileLocation){
+        this.openConnection(dbFileLocation);
         try {
             Statement statement = this.conn.createStatement();
             statement.execute(this.categories_setup);
@@ -249,16 +243,5 @@ public class Setup {
         }finally {
             closeConnection();
         }
-    }
-    public static void main(String[] args) throws IOException {
-        File dbFile = new File("./res/sample.db");
-        if(dbFile.exists()){
-            System.out.println("Database file located");
-            return;
-        }
-        dbFile.createNewFile();
-        Setup setup = new Setup();
-        setup.createDB();
-        System.out.println("Database file created");
     }
 }

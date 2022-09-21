@@ -6,18 +6,11 @@ import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class BorrowVideo {
-
-
-    Database db = new Database();
-
-
     int user_id, borrowing_rate, fine_rate, total_charge, num_of_pending_videos;
     String mem_num;
     String[] video_information;
     Boolean lost, damaged;
-
-
-    //$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+    private final Database db;
     public JPanel BorrowVideo;
     private JTextField searchBar;
     private JButton searchButton;
@@ -45,13 +38,11 @@ public class BorrowVideo {
     private JCheckBox lostCheckBox;
     private JPanel reportPanel;
     private JLabel sideInfo;
-    //$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-
-
     private final JLabel[] allErrors = {dbError, memUserError, searchDatabaseError, searchUserError, borrowingError, sideInfo};
     private final JTextField[] allTexts = {searchBar, membershipNumber};
 
-    BorrowVideo(){
+    BorrowVideo(Database database){
+        this.db = database;
         authenticateUser();
     }
 

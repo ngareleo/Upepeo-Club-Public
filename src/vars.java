@@ -1,5 +1,5 @@
 public interface vars {
-    public interface MemberRegister{
+    interface MemberRegister{
         String[] fieldErrors = {
                 "First name is required",
                 "Surname is required",
