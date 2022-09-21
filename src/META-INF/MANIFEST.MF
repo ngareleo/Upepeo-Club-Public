@@ -1,4 +1,0 @@
-Manifest-Version: 1.0
-Main-Class: App
-Class-Path: C:\Users\User\Documents\code-school\job_one\res\sqlite-jdbc-3.34.0.jar
-
