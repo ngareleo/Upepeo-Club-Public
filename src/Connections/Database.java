@@ -2,18 +2,33 @@ package Connections;
 
 import java.sql.*;
 import java.time.LocalDate;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class Database {
     private Connection conn = null;
     private Connection updateConnection = null;
     private static String url;
-    public Database(String dbPath){
+    private static Logger logger;
+    private final static String CONNECTION_CLOSE_ERROR_MESSAGE = "Error closing connection";
+    private final static String CONNECTION_OPEN_ERROR_MESSAGE = "Error opening connection";
+    private void logErrorMessage(String errorMessage) {
+        Database.logger.log(Level.WARNING, String.format("Error occurred while executing query. MSG : %s", errorMessage));
+    }
+    private void logErrorMessage(String errorDeclaration, String errorMessage) {
+        Database.logger.log(Level.WARNING, String.format("%s. MSG : %s",errorDeclaration, errorMessage));
+    }
+    private void logInfoMessage(String logMessage) {
+        Database.logger.log(Level.INFO, logMessage);
+    }
+
+    public Database(String dbPath, Logger logger){
+        Database.logger = logger;
         Database.url = String.format("jdbc:sqlite:%s", dbPath);
         try {
             conn = DriverManager.getConnection(Database.url);
-            System.out.println("Connection to SQLite has been established.");
         } catch (SQLException e) {
-            System.out.println(e.getMessage());
+            logErrorMessage(Database.CONNECTION_OPEN_ERROR_MESSAGE, e.getMessage());
         }
         finally {
             closeConnection();
@@ -21,9 +36,8 @@ public class Database {
 
         try {
             this.updateConnection = DriverManager.getConnection(Database.url);
-            System.out.println("Update connection has been established");
         }catch (SQLException e){
-            System.out.println(e.getMessage());
+            logErrorMessage(Database.CONNECTION_OPEN_ERROR_MESSAGE, e.getMessage());
         }finally {
             closeUpdateConnection();
         }
@@ -32,9 +46,8 @@ public class Database {
     private void openUpdateConnection(){
         try {
             this.updateConnection = DriverManager.getConnection(Database.url);
-            System.out.println("Update connection has been established");
         }catch (SQLException e){
-            System.out.println(e.getMessage());
+            logErrorMessage(Database.CONNECTION_OPEN_ERROR_MESSAGE, e.getMessage());
         }
     }
 
@@ -42,15 +55,14 @@ public class Database {
         try {
             this.updateConnection.close();
         }catch (SQLException e){
-            System.out.println(e.getMessage());
-            e.printStackTrace();
+            logErrorMessage(Database.CONNECTION_CLOSE_ERROR_MESSAGE, e.getMessage());
         }
     }
     private void openConnection(){
         try {
             conn = DriverManager.getConnection(Database.url);
         } catch (SQLException e) {
-            System.out.println(e.getMessage());
+            logErrorMessage(Database.CONNECTION_OPEN_ERROR_MESSAGE, e.getMessage());
         }
     }
     public void closeConnection(){
@@ -59,22 +71,22 @@ public class Database {
                 this.conn.close();
             }
         } catch (SQLException ex) {
-            System.out.println(ex.getMessage());
+            logErrorMessage(Database.CONNECTION_CLOSE_ERROR_MESSAGE, ex.getMessage());
         }
     }
+
     public boolean isUnique(String data, String table, String field){
         openConnection();
         boolean unique = false;
         String query = "SELECT * FROM " + table + " WHERE " + field + "='" + data + "'";
         try {
             Statement statement = this.conn.createStatement();
-
             ResultSet resultSet = statement.executeQuery(query);
             if(!resultSet.next()) {
                 unique = true;
             }
         }catch (SQLException e){
-            System.out.println(e.getMessage());
+            logErrorMessage(e.getMessage());
         }finally {
             closeConnection();
         }
@@ -97,11 +109,9 @@ public class Database {
         try {
             Statement statement  = this.updateConnection.createStatement();
             temp = statement.executeUpdate(sql);
-            System.out.println("User inserted");
-            // loop through the result set
+            logInfoMessage("Member added successfully");
         } catch (SQLException e) {
-            System.out.println(e.getMessage());
-            e.printStackTrace();
+            logErrorMessage(e.getMessage());
             temp = -1;
         }
         finally {
@@ -118,10 +128,9 @@ public class Database {
         try{
             Statement statement = this.updateConnection.createStatement();
             result = statement.executeUpdate(query);
-            System.out.println("Video Added");
+            logInfoMessage(String.format("Video with id %s has been added", now));
         }catch (SQLException e){
-            System.out.println(e.getMessage());
-            e.printStackTrace();
+            logErrorMessage(e.getMessage());
             result = -1;
         }finally {
             closeUpdateConnection();
@@ -141,30 +150,12 @@ public class Database {
                 id = resultSet.getInt("user_id");
             }
         }catch (SQLException e){
-            System.out.println(e.getMessage());
-            e.printStackTrace();
+            logErrorMessage(e.getMessage());
             id = -1;
         }finally {
             closeConnection();
         }
         return id;
-    }
-    public void selectAll(){
-        String sql = "SELECT * FROM members where membership_number='0000'";
-        openConnection();
-        try {
-            Statement stmt  = this.conn.createStatement();
-            ResultSet rs    = stmt.executeQuery(sql);
-
-            // loop through the result set
-            while (rs.next()) {
-                System.out.println(rs.getString("first_name"));
-            }
-        } catch (SQLException e) {
-            System.out.println(e.getMessage());
-        }finally {
-            closeConnection();
-        }
     }
 
     public String[] getVideoInformation(String query){
@@ -183,8 +174,7 @@ public class Database {
                 info[5] = videoInfo.getString("date_last_borrowed");
             }
         }catch (SQLException e){
-            System.out.println(e.getMessage());
-            e.printStackTrace();
+            logErrorMessage(e.getMessage());
             info[0] = "-1";
         }finally {
             closeConnection();
@@ -201,10 +191,9 @@ public class Database {
         try{
             Statement statement = this.updateConnection.createStatement();
             res = statement.executeUpdate(query);
-            System.out.println("Video Borrowed");
+            logInfoMessage(String.format("Book with ID %d queried and found.", video_id));
         }catch (SQLException e){
-            System.out.println(e.getMessage());
-            e.printStackTrace();
+            logErrorMessage(e.getMessage());
             res = -1;
         }finally {
             closeUpdateConnection();
@@ -220,10 +209,9 @@ public class Database {
         try{
             Statement statement = this.updateConnection.createStatement();
             res = statement.executeUpdate(query);
-            System.out.println("Video Borrowed");
+            logInfoMessage(String.format("Book with ID %d returned.", video_id));
         }catch (SQLException e){
-            System.out.println(e.getMessage());
-            e.printStackTrace();
+            logErrorMessage(e.getMessage());
             res = -1;
         }finally {
             closeUpdateConnection();
@@ -242,8 +230,7 @@ public class Database {
                 video_count++;
             }
         }catch (SQLException e){
-            e.printStackTrace();
-            System.out.println(e.getMessage());
+            logErrorMessage(e.getMessage());
         }finally {
             closeConnection();
         }
@@ -262,8 +249,7 @@ public class Database {
             }
         }catch (SQLException e){
             total = -1;
-            e.printStackTrace();
-            System.out.println(e.getMessage());
+            logErrorMessage(e.getMessage());
         }finally {
             closeConnection();
         }
@@ -278,10 +264,9 @@ public class Database {
         try{
             Statement statement = this.updateConnection.createStatement();
             res = statement.executeUpdate(query);
-            System.out.println("New Transaction made");
+            logInfoMessage(String.format("Transaction ID %s carried out successfully", now));
         }catch (SQLException e){
-            System.out.println(e.getMessage());
-            e.printStackTrace();
+            logErrorMessage(e.getMessage());
             res = -1;
         }finally {
             closeUpdateConnection();
@@ -300,8 +285,7 @@ public class Database {
                 bill_amount = rs.getInt("bill_balance");
             }
         }catch (SQLException e){
-            e.printStackTrace();
-            System.out.println(e.getMessage());
+            logErrorMessage(e.getMessage());
             bill_amount = -1;
         }finally {
             closeConnection();
@@ -311,16 +295,14 @@ public class Database {
 
     public int payBill(String mem_num){
         int res = 0;
-
         openUpdateConnection();
         String query = "UPDATE members SET bill_balance=0 WHERE membership_number='" + mem_num + "'";
         try{
             Statement statement = this.updateConnection.createStatement();
             res = statement.executeUpdate(query);
-            System.out.println("Bill repaid");
+            logInfoMessage("Bill paid");
         }catch (SQLException e){
-            System.out.println(e.getMessage());
-            e.printStackTrace();
+            logErrorMessage(e.getMessage());
             res = -1;
         }finally {
             closeUpdateConnection();
@@ -335,10 +317,8 @@ public class Database {
         try{
             Statement statement = this.updateConnection.createStatement();
             res = statement.executeUpdate(query);
-            System.out.println("Bill added");
         }catch (SQLException e){
-            System.out.println(e.getMessage());
-            e.printStackTrace();
+            logErrorMessage(e.getMessage());
             res = -1;
         }finally {
             closeUpdateConnection();

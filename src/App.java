@@ -3,13 +3,15 @@ import LandingPanel.LandingPage;
 import Strings.MainAppStrings;
 import javax.swing.*;
 import java.io.File;
+import java.util.logging.Logger;
 
 public class App extends JFrame {
-
     private final JPanel landingPanel;
+    private static Logger logger;
 
-    App(Database database) {
-        LandingPage landingPage = new LandingPage(this);
+    App(Database database, Logger logger) {
+        App.logger = logger;
+        LandingPage landingPage = new LandingPage(this, App.logger);
         landingPanel = landingPage.landingPage;
         landingPage.initializeTabs(database);
         initial_setup();
@@ -32,12 +34,14 @@ public class App extends JFrame {
     public static void main(String[] args) throws ClassNotFoundException, UnsupportedLookAndFeelException, InstantiationException, IllegalAccessException {
         String dbFileLocation = "./res/upepeo.sqlite";
         String jdbcUrl = String.format("jdbc:sqlite:%s", dbFileLocation);
-        File dbFile = new File(dbFileLocation);
-        if(!dbFile.exists()) {
+
+        if(!new File(dbFileLocation).exists()) {
             new Setup(jdbcUrl);
         }
-        Database database = new Database(dbFileLocation);
+
+        Logger logger = Logger.getLogger(App.class.getName());
+        Database database = new Database(dbFileLocation, logger);
         UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        new App(database);
+        new App(database, logger);
     }
 }

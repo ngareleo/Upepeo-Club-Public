@@ -4,6 +4,7 @@ import Connections.Database;
 import javax.swing.*;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
 public class MemberRegister {
@@ -31,7 +32,7 @@ public class MemberRegister {
     private final JTextField[] fields = {
             firstName, surname, phoneNumber, nationalID, resAddress, occupation};
 
-    public MemberRegister(Database database){
+    public MemberRegister(Database database, Logger logger){
         this.database = database;
         setAllErrorsInvisible();
         addEventListeners();
@@ -48,16 +49,15 @@ public class MemberRegister {
             setAllErrorsInvisible();
             if(!allFilled())return;
 
-            String fnValue = firstName.getText().trim(),
-                    surnameValue = surname.getText().trim(),
-                    phoneNumberValue = phoneNumber.getText().trim(),
-                    IDValue = nationalID.getText().trim(),
-                    occupationValue = occupation.getText().trim(),
-                    resAddressValue = resAddress.getText().trim(),
-                    membershipNumber = generate_membershipNumber();
-            allCorrect = checkNames(fnValue, surnameValue);
-            allCorrect = phoneNumberCheck(phoneNumberValue);
-            allCorrect = idNumberCheck(IDValue);
+            String fnValue = firstName.getText().trim();
+            String surnameValue = surname.getText().trim();
+            String phoneNumberValue = phoneNumber.getText().trim();
+            String IDValue = nationalID.getText().trim();
+            String occupationValue = occupation.getText().trim();
+            String resAddressValue = resAddress.getText().trim();
+            String membershipNumber = generate_membershipNumber();
+
+            allCorrect = checkNames(fnValue, surnameValue) && phoneNumberCheck(phoneNumberValue) && idNumberCheck(IDValue);
             if(!allCorrect)return;
             String[] final_data = {fnValue, surnameValue, phoneNumberValue, resAddressValue, IDValue, membershipNumber};
             submitData(final_data);
@@ -126,8 +126,8 @@ public class MemberRegister {
             IDError.setVisible(true);
             IDError.setText(MemberRegistrationStrings.invalidIDLengthErrorText);
             return false;
-
         }
+
         try{
             Integer i = Integer.valueOf(in);
         }catch (Exception u){

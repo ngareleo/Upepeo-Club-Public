@@ -6,6 +6,7 @@ import FinancesManagementPanel.FinanceManager;
 import MemberRegistrationPanel.MemberRegister;
 import VideoRegistrationPanel.VideoRegister;
 import javax.swing.*;
+import java.util.logging.Logger;
 
 public class LandingPage {
     public JPanel landingPage;
@@ -23,16 +24,18 @@ public class LandingPage {
     FinanceManager financeManager;
     JButton memberRegistrationBackButton, videoRegistrationBackButton, borrowVideoHomeButton, financesHomeBackButton;
     private final JFrame hostApp;
+    private final Logger logger;
 
-    public LandingPage(JFrame hostApp) {
+    public LandingPage(JFrame hostApp, Logger logger) {
         this.hostApp = hostApp;
+        this.logger = logger;
     }
 
     public void initializeTabs(Database database) {
-        this.memberRegister = new MemberRegister(database);
-        this.financeManager = new FinanceManager(database);
-        this.videoRegister = new VideoRegister(database);
-        this.borrowVideo = new BorrowVideo(database);
+        this.memberRegister = new MemberRegister(database, logger);
+        this.financeManager = new FinanceManager(database, logger);
+        this.videoRegister = new VideoRegister(database, logger);
+        this.borrowVideo = new BorrowVideo(database, logger);
 
         this.memberRegistrationPanel = this.memberRegister.memberRegister;
         this.videoRegPanel = this.videoRegister.VideoRegister;

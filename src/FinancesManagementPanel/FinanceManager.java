@@ -3,6 +3,7 @@ package FinancesManagementPanel;
 import Connections.Database;
 
 import javax.swing.*;
+import java.util.logging.Logger;
 
 public class FinanceManager {
     private final Database database;
@@ -25,7 +26,7 @@ public class FinanceManager {
     private JButton exitButton;
     final private JLabel[] errors = {userError, dataBaseError};
 
-    public FinanceManager(Database database){
+    public FinanceManager(Database database, Logger logger){
         this.database = database;
         prepareFinanceTab();
         clearBillButton.addActionListener(e -> {
