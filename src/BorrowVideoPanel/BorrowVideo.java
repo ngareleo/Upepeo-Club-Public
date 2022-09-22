@@ -1,7 +1,7 @@
 package BorrowVideoPanel;
 
 import Connections.Database;
-import LandingPanel.LandingPage;
+import Tools.Types.*;
 import Tools.Utils;
 import javax.swing.*;
 import java.awt.*;
@@ -176,7 +176,6 @@ public class BorrowVideo {
                 this.damaged = true;
             }
             StringBuilder videoReport = new StringBuilder();
-            int res = 0;
             if(this.damaged){
                 videoReport.append(BorrowVideoStrings.videoStatusDamagedText);
                 video_st = 2;
@@ -188,8 +187,8 @@ public class BorrowVideo {
             }
             if(!(this.lost || this.damaged))
                 videoReport.append(BorrowVideoStrings.videoStatusNormalText);
-            res = database.returnVideo(Integer.parseInt(this.video_information[0]), String.valueOf(videoReport), video_st);
-            if(res != 1){
+            QueryProgress queryProgress = database.returnVideo(Integer.parseInt(this.video_information[0]), String.valueOf(videoReport), video_st);
+            if(queryProgress == QueryProgress.ERROR){
                 borrowingError.setText(BorrowVideoStrings.backendErrorText);
                 borrowingError.setVisible(true);
                 return;
@@ -220,7 +219,6 @@ public class BorrowVideo {
                 borrowingError.setVisible(true);
                 return;
             }
-            int res = 0;
             if(!this.video_information[2].equals("1")){
                 borrowingError.setText(BorrowVideoStrings.videoUnavailableText);
                 borrowingError.setVisible(true);
@@ -241,14 +239,15 @@ public class BorrowVideo {
                 database.addToBill(this.borrowing_rate, this.mem_num);
             }
             AtomicInteger confirm = new AtomicInteger();
+            QueryProgress queryProgress;
             if(confirm.get() == 0){
-                res = database.borrowVideo(Integer.parseInt(this.video_information[0]), user_id);
+                queryProgress = database.borrowVideo(Integer.parseInt(this.video_information[0]), user_id);
+                if(queryProgress == QueryProgress.ERROR){
+                    borrowingError.setText(BorrowVideoStrings.backendErrorText);
+                    borrowingError.setVisible(true);
+                    return;
+                }
             }else{return;}
-            if(res != 1){
-                borrowingError.setText(BorrowVideoStrings.backendErrorText);
-                borrowingError.setVisible(true);
-                return;
-            }
             JOptionPane.showMessageDialog(BorrowVideo, BorrowVideoStrings.videoBorrowedSuccessText);
             init();
         });

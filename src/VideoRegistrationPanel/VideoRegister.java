@@ -1,8 +1,8 @@
 package VideoRegistrationPanel;
 
 import Connections.Database;
+import Tools.Types.*;
 import Tools.Utils;
-
 import javax.swing.*;
 import java.util.HashMap;
 import java.util.logging.Logger;
@@ -36,8 +36,8 @@ public class VideoRegister {
                     videoCategoryValue = (String) videoCategory.getSelectedItem();
             HashMap<String, Integer> map = Utils.getCategoryId();
             int video_category = map.get(videoCategoryValue);
-            int res = database.addVideo(videoNameValue, video_category);
-            if( res == 1 ){
+            QueryProgress queryProgress = database.addVideo(videoNameValue, video_category);
+            if( queryProgress == QueryProgress.COMPLETE){
                 clearAll();
                 JOptionPane.showMessageDialog(VideoRegister,VideoRegistrationStrings.videoRegistrationSuccessText);
             }else{
