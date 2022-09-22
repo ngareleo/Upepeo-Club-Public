@@ -4,6 +4,7 @@ import java.sql.*;
 import java.time.LocalDate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import Tools.Types.*;
 
 public class Database {
     private Connection conn = null;
@@ -22,13 +23,14 @@ public class Database {
         Database.logger.log(Level.INFO, logMessage);
     }
 
+
     public Database(String dbPath, Logger logger){
         Database.logger = logger;
         Database.url = String.format("jdbc:sqlite:%s", dbPath);
         try {
             conn = DriverManager.getConnection(Database.url);
-        } catch (SQLException e) {
-            logErrorMessage(Database.CONNECTION_OPEN_ERROR_MESSAGE, e.getMessage());
+        } catch (SQLException sqlException) {
+            logErrorMessage(Database.CONNECTION_OPEN_ERROR_MESSAGE, sqlException.getMessage());
         }
         finally {
             closeConnection();
@@ -36,8 +38,8 @@ public class Database {
 
         try {
             this.updateConnection = DriverManager.getConnection(Database.url);
-        }catch (SQLException e){
-            logErrorMessage(Database.CONNECTION_OPEN_ERROR_MESSAGE, e.getMessage());
+        }catch (SQLException sqlException){
+            logErrorMessage(Database.CONNECTION_OPEN_ERROR_MESSAGE, sqlException.getMessage());
         }finally {
             closeUpdateConnection();
         }
@@ -46,23 +48,23 @@ public class Database {
     private void openUpdateConnection(){
         try {
             this.updateConnection = DriverManager.getConnection(Database.url);
-        }catch (SQLException e){
-            logErrorMessage(Database.CONNECTION_OPEN_ERROR_MESSAGE, e.getMessage());
+        }catch (SQLException sqlException){
+            logErrorMessage(Database.CONNECTION_OPEN_ERROR_MESSAGE, sqlException.getMessage());
         }
     }
 
     private void closeUpdateConnection(){
         try {
             this.updateConnection.close();
-        }catch (SQLException e){
-            logErrorMessage(Database.CONNECTION_CLOSE_ERROR_MESSAGE, e.getMessage());
+        }catch (SQLException sqlException){
+            logErrorMessage(Database.CONNECTION_CLOSE_ERROR_MESSAGE, sqlException.getMessage());
         }
     }
     private void openConnection(){
         try {
             conn = DriverManager.getConnection(Database.url);
-        } catch (SQLException e) {
-            logErrorMessage(Database.CONNECTION_OPEN_ERROR_MESSAGE, e.getMessage());
+        } catch (SQLException sqlException) {
+            logErrorMessage(Database.CONNECTION_OPEN_ERROR_MESSAGE, sqlException.getMessage());
         }
     }
     public void closeConnection(){
@@ -70,101 +72,96 @@ public class Database {
             if (this.conn != null) {
                 this.conn.close();
             }
-        } catch (SQLException ex) {
-            logErrorMessage(Database.CONNECTION_CLOSE_ERROR_MESSAGE, ex.getMessage());
+        } catch (SQLException sqlException) {
+            logErrorMessage(Database.CONNECTION_CLOSE_ERROR_MESSAGE, sqlException.getMessage());
         }
     }
 
-    public boolean isUnique(String data, String table, String field){
+    public boolean entityExists(String data, String table, String field){
         openConnection();
-        boolean unique = false;
-        String query = "SELECT * FROM " + table + " WHERE " + field + "='" + data + "'";
+        boolean exists = false;
+        String query = String.format(Queries.isUniqueCheckQuery, table, field, data);
         try {
             Statement statement = this.conn.createStatement();
             ResultSet resultSet = statement.executeQuery(query);
             if(!resultSet.next()) {
-                unique = true;
+                exists = true;
             }
-        }catch (SQLException e){
-            logErrorMessage(e.getMessage());
+        }catch (SQLException sqlException){
+            logErrorMessage(sqlException.getMessage());
         }finally {
             closeConnection();
         }
-        return unique;
+        return exists;
     }
 
-    public int addMember(String[] data){
-        //first_name, surname, phone_number, res_address, date_added, national_id
+    public QueryProgress addMember(String[] data){
         openUpdateConnection();
-        int temp = 0;
-        Date now = Date.valueOf(LocalDate.now());
-        String sql = "INSERT INTO Members(first_name, surname, phone_number, Residential_address, date_added, national_id, membership_number) VALUES ('" +
-                data[0] + "', '" +
-                data[1] + "', '" +
-                data[2] + "', '" +
-                data[3] + "', '" +
-                now.toString() + "', '" +
-                data[4] + "', '" +
-                data[5] + "')";
+        QueryProgress queryProgress;
+        String now = Date.valueOf(LocalDate.now()).toString();
+        String sqlQuery = String.format(Queries.addMemberQuery, data[0], data[1], data[2], data[3], now, data[4], data[5]);
         try {
             Statement statement  = this.updateConnection.createStatement();
-            temp = statement.executeUpdate(sql);
+            statement.executeUpdate(sqlQuery);
+            queryProgress = QueryProgress.COMPLETE;
             logInfoMessage("Member added successfully");
-        } catch (SQLException e) {
-            logErrorMessage(e.getMessage());
-            temp = -1;
+        } catch (SQLException sqlException) {
+            logErrorMessage(sqlException.getMessage());
+            queryProgress = QueryProgress.ERROR;
         }
         finally {
             closeUpdateConnection();
         }
-        return temp;
-    }
-    public int addVideo(String videoName, int videCategory){
-        Date now = Date.valueOf(LocalDate.now());
-        this.openUpdateConnection();
-        int result = 0;
-        String query = "INSERT INTO videos (video_name, video_category, video_status, date_added) VALUES ( '"
-                + videoName + "', " + videCategory + ", 1, '" + now.toString() + "')";
-        try{
-            Statement statement = this.updateConnection.createStatement();
-            result = statement.executeUpdate(query);
-            logInfoMessage(String.format("Video with id %s has been added", now));
-        }catch (SQLException e){
-            logErrorMessage(e.getMessage());
-            result = -1;
-        }finally {
-            closeUpdateConnection();
-        }
-        return result;
+        return queryProgress;
     }
 
-    public int getUserId(String mem_number){
-        int id = -2;
+    public QueryProgress addVideo(String videoName, int videCategory){
+        String currentDate = Date.valueOf(LocalDate.now()).toString();
+        this.openUpdateConnection();
+        QueryProgress queryProgress;
+        String query = String.format(Queries.addVideoQuery, videoName, videCategory, currentDate);
+        try{
+            Statement statement = this.updateConnection.createStatement();
+            statement.executeUpdate(query);
+            queryProgress = QueryProgress.COMPLETE;
+            logInfoMessage(String.format("Video with id %s has been added", currentDate));
+        }catch (SQLException sqlException){
+            logErrorMessage(sqlException.getMessage());
+            queryProgress = QueryProgress.ERROR;
+        } finally {
+            closeUpdateConnection();
+        }
+        return queryProgress;
+    }
+
+    public int getUserId(String membershipNumber){
+        int userReturnID = 0;
+        QueryProgress queryProgress;
         openConnection();
-        String query = "SELECT * FROM members WHERE membership_number='" + mem_number + "'";
+        String sqlQuery = String.format(Queries.getUserIDQuery, membershipNumber);
         try{
             Statement statement = this.conn.createStatement();
-            ResultSet resultSet = statement.executeQuery(query);
+            ResultSet resultSet = statement.executeQuery(sqlQuery);
             while(resultSet.next()){
-                System.out.println(resultSet.getInt("user_id"));
-                id = resultSet.getInt("user_id");
+                userReturnID = resultSet.getInt("user_id");
             }
-        }catch (SQLException e){
-            logErrorMessage(e.getMessage());
-            id = -1;
+            queryProgress = QueryProgress.COMPLETE;
+        }catch (SQLException sqlException){
+            logErrorMessage(sqlException.getMessage());
+            queryProgress = QueryProgress.ERROR;
         }finally {
             closeConnection();
         }
-        return id;
+        return (queryProgress == QueryProgress.ERROR) ? -1 : userReturnID;
     }
 
-    public String[] getVideoInformation(String query){
+    public String[] getVideoInformation(String videoID){
         String[] info = new String[6];
-        String sql = "SELECT * FROM videos WHERE video_id=" + query + " OR video_name='" + query + "'";
+        String sqlQuery = String.format(Queries.getVideoInformationQuery, videoID, videoID);
         openConnection();
         try{
-            Statement st = this.conn.createStatement();
-            ResultSet videoInfo = st.executeQuery(sql);
+            Statement statement = this.conn.createStatement();
+            ResultSet videoInfo = statement.executeQuery(sqlQuery);
             while (videoInfo.next()){
                 info[0] = videoInfo.getString("video_id");
                 info[1] = String.valueOf(videoInfo.getInt("video_category"));
@@ -173,8 +170,8 @@ public class Database {
                 info[4] = String.valueOf(videoInfo.getInt("borrower"));
                 info[5] = videoInfo.getString("date_last_borrowed");
             }
-        }catch (SQLException e){
-            logErrorMessage(e.getMessage());
+        }catch (SQLException sqlException){
+            logErrorMessage(sqlException.getMessage());
             info[0] = "-1";
         }finally {
             closeConnection();
@@ -182,146 +179,158 @@ public class Database {
         return info;
     }
 
-    public int borrowVideo(int video_id, int user_id){
-        int res = 0;
+    public QueryProgress borrowVideo(int video_id, int user_id){
         openUpdateConnection();
-        Date now = Date.valueOf(LocalDate.now());
-        String query = "UPDATE videos " +
-                "SET borrower=" + user_id + ", date_last_borrowed='" + now.toString() + "', video_status=4 WHERE video_id=" + video_id;
+        QueryProgress queryProgress;
+        String currentDate = Date.valueOf(LocalDate.now()).toString();
+        String query = String.format(Queries.borrowVideoQuery, user_id, currentDate, video_id);
         try{
             Statement statement = this.updateConnection.createStatement();
-            res = statement.executeUpdate(query);
+            statement.executeUpdate(query);
+            queryProgress = QueryProgress.COMPLETE;
             logInfoMessage(String.format("Book with ID %d queried and found.", video_id));
-        }catch (SQLException e){
-            logErrorMessage(e.getMessage());
-            res = -1;
+        }catch (SQLException sqlException){
+            logErrorMessage(sqlException.getMessage());
+            queryProgress = QueryProgress.ERROR;
         }finally {
             closeUpdateConnection();
         }
-        return res;
+        return queryProgress;
     }
 
-    public int returnVideo(int video_id, String videoReport, int videoStatus){
-        int res = 0;
+    public QueryProgress returnVideo(int video_id, String videoReport, int videoStatus){
         openUpdateConnection();
-        String query = "UPDATE videos " +
-                "SET borrower=null, video_status="+ videoStatus + ", latest_report='" + videoReport + "' WHERE video_id=" + video_id;
+        QueryProgress queryProgress;
+        String query = String.format("UPDATE videos SET video_status=%d, latest_report='%s' WHERE video_id=%d", videoStatus, videoReport, video_id);
         try{
             Statement statement = this.updateConnection.createStatement();
-            res = statement.executeUpdate(query);
+            statement.executeUpdate(query);
+            queryProgress = QueryProgress.COMPLETE;
             logInfoMessage(String.format("Book with ID %d returned.", video_id));
-        }catch (SQLException e){
-            logErrorMessage(e.getMessage());
-            res = -1;
+        }catch (SQLException sqlException){
+            logErrorMessage(sqlException.getMessage());
+            queryProgress = QueryProgress.ERROR;
         }finally {
             closeUpdateConnection();
         }
-        return res;
+        return queryProgress;
     }
 
-    public int checkPendingVideos(int user_id){
+    public int checkPendingVideos(int userId){
         openConnection();
-        int video_count = 0;
-        String queryString = "SELECT * FROM videos WHERE video_status=4 AND borrower=" + user_id;
+        QueryProgress queryProgress;
+        int videoCount = 0;
+        String queryString = String.format(Queries.checkPendingVideosQuery, userId);
         try {
-            Statement st = this.conn.createStatement();
-            ResultSet rs = st.executeQuery(queryString);
-            while(rs.next()){
-                video_count++;
+            Statement statement = this.conn.createStatement();
+            ResultSet resultSet = statement.executeQuery(queryString);
+            while(resultSet.next()){
+                videoCount++;
             }
-        }catch (SQLException e){
-            logErrorMessage(e.getMessage());
+            queryProgress = QueryProgress.COMPLETE;
+        }catch (SQLException sqlException){
+            queryProgress = QueryProgress.ERROR;
+            logErrorMessage(sqlException.getMessage());
         }finally {
             closeConnection();
         }
-        return video_count;
+        return (queryProgress == QueryProgress.ERROR)? -1 : videoCount;
     }
 
     public int getTotalAmount(){
+        openConnection();
         int total = 0;
-        openConnection();
-        String queryString = "SELECT * FROM finance";
+        QueryProgress queryProgress;
+        String queryString = Queries.totalAmountQuery;
         try {
-            Statement st = this.conn.createStatement();
-            ResultSet rs = st.executeQuery(queryString);
-            while(rs.next()){
-                total += rs.getInt("amount");
+            Statement statement = this.conn.createStatement();
+            ResultSet resultSet = statement.executeQuery(queryString);
+            while(resultSet.next()){
+                total += resultSet.getInt("amount");
             }
-        }catch (SQLException e){
-            total = -1;
-            logErrorMessage(e.getMessage());
+            queryProgress = QueryProgress.COMPLETE;
+        }catch (SQLException sqlException){
+            queryProgress = QueryProgress.ERROR;
+            logErrorMessage(sqlException.getMessage());
         }finally {
             closeConnection();
         }
-        return total;
+        return (queryProgress == QueryProgress.ERROR) ? -1 : total;
     }
 
-    public int carryTransaction(int amount, int type){
-        int res = 0;
+    public QueryProgress carryTransaction(int amount, int type){
+        QueryProgress queryProgress;
         openUpdateConnection();
-        Date now = Date.valueOf(LocalDate.now());
-        String query = "INSERT INTO finance (amount, date_added, transaction_type) VALUES (" + amount +", '" + now.toString() + "', " + type + ")";
+        String now = Date.valueOf(LocalDate.now()).toString();
+        String query = String.format(Queries.carryoutTransactionQuery, amount, now, type);
         try{
             Statement statement = this.updateConnection.createStatement();
-            res = statement.executeUpdate(query);
+            statement.executeUpdate(query);
             logInfoMessage(String.format("Transaction ID %s carried out successfully", now));
-        }catch (SQLException e){
-            logErrorMessage(e.getMessage());
-            res = -1;
+            queryProgress = QueryProgress.COMPLETE;
+        }catch (SQLException sqlException){
+            logErrorMessage(sqlException.getMessage());
+            queryProgress = QueryProgress.ERROR;
         }finally {
             closeUpdateConnection();
         }
-        return res;
+        return queryProgress;
     }
 
-    public int getBill(String mem_num){
+    public int getBill(String membershipNumber){
         openConnection();
-        int bill_amount = 0;
-        String queryString = "SELECT * FROM members WHERE membership_number='" + mem_num + "'";
+        int billAmount = 0;
+        QueryProgress queryProgress;
+        String queryString = String.format(Queries.billQuery, membershipNumber);
         try {
-            Statement st = this.conn.createStatement();
-            ResultSet rs = st.executeQuery(queryString);
-            while(rs.next()){
-                bill_amount = rs.getInt("bill_balance");
+            Statement statement = this.conn.createStatement();
+            ResultSet resultSet = statement.executeQuery(queryString);
+            while(resultSet.next()){
+                billAmount = resultSet.getInt("bill_balance");
             }
-        }catch (SQLException e){
-            logErrorMessage(e.getMessage());
-            bill_amount = -1;
+            queryProgress = QueryProgress.COMPLETE;
+        }catch (SQLException sqlException){
+            logErrorMessage(sqlException.getMessage());
+            queryProgress = QueryProgress.ERROR;
         }finally {
             closeConnection();
         }
-        return bill_amount;
+        return (queryProgress == QueryProgress.ERROR)? -1 : billAmount;
     }
 
-    public int payBill(String mem_num){
-        int res = 0;
+    public QueryProgress payBill(String membershipNumber){
         openUpdateConnection();
-        String query = "UPDATE members SET bill_balance=0 WHERE membership_number='" + mem_num + "'";
+        QueryProgress queryProgress;
+        String query = String.format(Queries.payBillQuery, membershipNumber);
         try{
             Statement statement = this.updateConnection.createStatement();
-            res = statement.executeUpdate(query);
+            statement.executeUpdate(query);
             logInfoMessage("Bill paid");
-        }catch (SQLException e){
-            logErrorMessage(e.getMessage());
-            res = -1;
+            queryProgress = QueryProgress.COMPLETE;
+        }catch (SQLException sqlException){
+            logErrorMessage(sqlException.getMessage());
+            queryProgress = QueryProgress.ERROR;
         }finally {
             closeUpdateConnection();
         }
-        return res;
+        return queryProgress;
     }
-    public void addToBill(int amount, String mem_num){
-        int res = 0;
-        int pending_bill = getBill(mem_num);
+    public QueryProgress addToBill(int amount, String membershipNumber){
+        QueryProgress queryProgress;
+        int pendingBill = getBill(membershipNumber);
+        int currentBill = pendingBill + amount;
         openUpdateConnection();
-        String query = "UPDATE members SET bill_balance=" + (pending_bill + amount) + " WHERE membership_number='" + mem_num + "'";
+        String query = String.format(Queries.addToBillMutation, currentBill, membershipNumber);
         try{
             Statement statement = this.updateConnection.createStatement();
-            res = statement.executeUpdate(query);
-        }catch (SQLException e){
-            logErrorMessage(e.getMessage());
-            res = -1;
+            statement.executeUpdate(query);
+            queryProgress = QueryProgress.COMPLETE;
+        }catch (SQLException sqlException){
+            logErrorMessage(sqlException.getMessage());
+            queryProgress = QueryProgress.ERROR;
         }finally {
             closeUpdateConnection();
         }
+        return queryProgress;
     }
 }

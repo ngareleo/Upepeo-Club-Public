@@ -1,6 +1,7 @@
 package FinancesManagementPanel;
 
 import Connections.Database;
+import Tools.Types.*;
 
 import javax.swing.*;
 import java.util.logging.Logger;
@@ -46,12 +47,12 @@ public class FinanceManager {
                 userError.setText(FinanceManagementStrings.memberShipNumberRequiredText);
                 userError.setVisible(true);
             }
-            if(this.database.carryTransaction(amount, 3) == -1){
+            if(this.database.carryTransaction(amount, 3) == QueryProgress.ERROR){
                 dataBaseError.setVisible(true);
                 dataBaseError.setText(FinanceManagementStrings.internalError);
             }else{
-                int res = this.database.payBill(membershipNumber.getText().trim());
-                if(res == -1){
+                QueryProgress queryProgress = this.database.payBill(membershipNumber.getText().trim());
+                if(queryProgress == QueryProgress.ERROR){
                     dataBaseError.setVisible(true);
                     dataBaseError.setText(FinanceManagementStrings.internalError);
                     return;

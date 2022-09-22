@@ -1,6 +1,7 @@
 package MemberRegistrationPanel;
 
 import Connections.Database;
+import Tools.Types.*;
 import javax.swing.*;
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -69,8 +70,8 @@ public class MemberRegister {
     }
 
     private void submitData(String[] data){
-        int res = this.database.addMember(data);
-        if(res != 1){
+        QueryProgress queryProgress = this.database.addMember(data);
+        if(queryProgress == QueryProgress.ERROR){
            submitError.setText(MemberRegistrationStrings.dataSubmissionErrorText);
            submitError.setVisible(true);
         }else{
@@ -113,7 +114,7 @@ public class MemberRegister {
 
         }
 
-        if (!database.isUnique(phoneNumber, "members", "phone_number")){
+        if (database.entityExists(phoneNumber, "members", "phone_number")){
             phoneError.setVisible(true);
             phoneError.setText(MemberRegistrationStrings.phoneNumberInUseErrorText);
             return false;
@@ -136,7 +137,7 @@ public class MemberRegister {
             return false;
         }
 
-        if (!database.isUnique(in, "members", "national_id")){
+        if (database.entityExists(in, "members", "national_id")){
             IDError.setVisible(true);
             IDError.setText(MemberRegistrationStrings.IDInUseText);
             return false;
@@ -145,7 +146,6 @@ public class MemberRegister {
     }
 
     private String generate_membershipNumber(){
-        //we append the timestamp on top of the
         Timestamp now = Timestamp.from(Instant.now());
         return String.valueOf(now.getTime());
     }
@@ -154,7 +154,7 @@ public class MemberRegister {
         int i = 0;
         boolean allCorrect = true;
         for(JTextField field: this.fields){
-            if(field.getText().trim().equals("")){
+            if(field.getText().trim().equals(MemberRegistrationStrings.NO_TEXT)){
                 allCorrect = false;
                 errors[i].setVisible(true);
                 errors[i].setText(MemberRegistrationStrings.fieldErrors[i]);
@@ -166,6 +166,6 @@ public class MemberRegister {
 
     private void clearAll(){
         for(JTextField field: fields)
-            field.setText("");
+            field.setText(MemberRegistrationStrings.NO_TEXT);
     }
 }
