@@ -1,14 +1,17 @@
 package BorrowVideoPanel;
 
 import Connections.Database;
+import LandingPanel.LandingPage;
 import Tools.Utils;
 import javax.swing.*;
 import java.awt.*;
 import java.time.LocalDate;
 import java.time.Period;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Logger;
 
 public class BorrowVideo {
+    private final Logger logger;
     int user_id, borrowing_rate, fine_rate, total_charge, num_of_pending_videos;
     String mem_num;
     String[] video_information;
@@ -45,7 +48,8 @@ public class BorrowVideo {
     private final JTextField[] allTexts = {searchBar, membershipNumber};
     private final String[] choices = {"Pay Now", "Add to Bill"};
 
-    public BorrowVideo(Database database){
+    public BorrowVideo(Database database, Logger logger){
+        this.logger = logger;
         this.database = database;
         authenticateUser();
     }
@@ -94,24 +98,22 @@ public class BorrowVideo {
                 memUserError.setText(BorrowVideoStrings.memberIDMissingErrorText);
                 return;
             }
-            System.out.printf("Mem : %s\n", user_mem_id);
             user_id = database.getUserId(user_mem_id);
             this.mem_num = user_mem_id;
             if(user_id == -2){
                 dbError.setIcon(imageIcon);
                 dbError.setText(BorrowVideoStrings.memberNotFoundErrorText);
-                System.out.println(BorrowVideoStrings.memberNotFoundErrorText); // TODO: Introduce logger
+                logger.warning("Error! User not found");
                 dbError.setVisible(true);
                 return;
             }else if(user_id == -1){
                 dbError.setIcon(imageIcon);
                 dbError.setVisible(true);
-                System.out.println(BorrowVideoStrings.backendErrorText);
+                logger.warning(BorrowVideoStrings.backendErrorText);
                 dbError.setText(BorrowVideoStrings.backendErrorText);
                 return;
             }else{
                 this.user_id = user_id;
-                System.out.println("Authorized!!");
             }
             userAuthorized();
             init();

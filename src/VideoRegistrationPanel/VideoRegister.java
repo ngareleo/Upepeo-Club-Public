@@ -5,6 +5,7 @@ import Tools.Utils;
 
 import javax.swing.*;
 import java.util.HashMap;
+import java.util.logging.Logger;
 
 public class VideoRegister {
     private final Database database;
@@ -16,7 +17,7 @@ public class VideoRegister {
     private JLabel submitError;
     public JButton backButton;
 
-    public VideoRegister(Database database){
+    public VideoRegister(Database database, Logger logger){
         this.database = database;
         setAllInvisible();
         check_credentials();
@@ -36,7 +37,6 @@ public class VideoRegister {
             HashMap<String, Integer> map = Utils.getCategoryId();
             int video_category = map.get(videoCategoryValue);
             int res = database.addVideo(videoNameValue, video_category);
-            System.out.printf("Result  : %d\n", res); // TODO: Use Logger instead
             if( res == 1 ){
                 clearAll();
                 JOptionPane.showMessageDialog(VideoRegister,VideoRegistrationStrings.videoRegistrationSuccessText);
