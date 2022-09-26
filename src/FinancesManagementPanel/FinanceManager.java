@@ -1,13 +1,14 @@
 package FinancesManagementPanel;
 
 import Connections.Database;
-import Tools.Types.*;
+import Entities.Member;
+import Entities.MemberHandler;
+import Entities.Store;
 
 import javax.swing.*;
 import java.util.logging.Logger;
 
 public class FinanceManager {
-    private final Database database;
     private JButton refreshButton;
     private JButton generateReportButton;
     public JPanel FinanceManager;
@@ -25,11 +26,21 @@ public class FinanceManager {
     private JLabel totalAmount;
     private JLabel devAmount;
     private JButton exitButton;
-    final private JLabel[] errors = {userError, dataBaseError};
+    private final  JLabel[] errors = {
+            userError,
+            dataBaseError
+    };
+    private final MemberHandler memberHandler;
+    private final Store store;
 
     public FinanceManager(Database database, Logger logger){
-        this.database = database;
+        this.memberHandler = new MemberHandler(database, logger);
+        this.store = new Store(database);
         prepareFinanceTab();
+        addEventListeners();
+    }
+
+    private void addEventListeners() {
         clearBillButton.addActionListener(e -> {
             clearBillPanel.setVisible(true);
             mainPanel.setVisible(false);
@@ -41,47 +52,55 @@ public class FinanceManager {
         });
 
         clearBillButton_m.addActionListener( e -> {
-            int amount = this.database.getBill(membershipNumber.getText().trim());
             setErrorsInvisible();
-            if(membershipNumber.getText().trim().equals("")){
-                userError.setText(FinanceManagementStrings.memberShipNumberRequiredText);
-                userError.setVisible(true);
-            }
-            if(this.database.carryTransaction(amount, 3) == QueryProgress.ERROR){
+            String membershipNumber = this.getMembershipNumberFromForm();
+            if (membershipNumber == null) return;
+
+            Member clearingMember = this.memberHandler.getMemberInformation(membershipNumber);
+            double totalUserBill = clearingMember.getBillBalance();
+            if (totalUserBill == 0) {/*show user there is no need to clear*/}
+            boolean billHasBeenClearedSuccessfully = this.memberHandler.clearMemberBill(totalUserBill, clearingMember);
+            if (!billHasBeenClearedSuccessfully) {
                 dataBaseError.setVisible(true);
                 dataBaseError.setText(FinanceManagementStrings.internalError);
-            }else{
-                QueryProgress queryProgress = this.database.payBill(membershipNumber.getText().trim());
-                if(queryProgress == QueryProgress.ERROR){
-                    dataBaseError.setVisible(true);
-                    dataBaseError.setText(FinanceManagementStrings.internalError);
-                    return;
-                }
-                JOptionPane.showMessageDialog(FinanceManager, FinanceManagementStrings.billClearedText);
             }
+            JOptionPane.showMessageDialog(FinanceManager, FinanceManagementStrings.billClearedText);
         });
-        generateReportButton.addActionListener( e -> {
-            // TODO: Add action
-        });
+
+        generateReportButton.addActionListener( e -> {});
+
+        refreshButton.addActionListener( e -> {});
+    }
+
+    private void populateFinanceTab(){
+        String roundedTotalAmount = String.valueOf(this.store.getTotalCash());
+        String roundedAdminAmount = String.valueOf(this.store.getAdministrationFunds());
+        String roundedSalariesAmount = String.valueOf(this.store.getSalariesFunds());
+        String roundedMiscellaneousAmount = String.valueOf(this.store.getMiscellaneousFunds());
+        String roundedDevelopmentsAmount = String.valueOf(this.store.getDevelopmentFunds());
+
+        this.totalAmount.setText(String.format(FinanceManagementStrings.kshMoneyFormat, roundedTotalAmount));
+        this.adminAmount.setText(String.format(FinanceManagementStrings.kshMoneyFormat, roundedAdminAmount));
+        this.salariesAmount.setText(String.format(FinanceManagementStrings.kshMoneyFormat, roundedSalariesAmount));
+        this.miscAmounts.setText(String.format(FinanceManagementStrings.kshMoneyFormat, roundedMiscellaneousAmount));
+        this.devAmount.setText(String.format(FinanceManagementStrings.kshMoneyFormat, roundedDevelopmentsAmount));
+    }
+
+    private String getMembershipNumberFromForm() {
+        String membershipNumber = this.membershipNumber.getText().trim();
+        if(membershipNumber.equals(FinanceManagementStrings.NO_TEXT)){
+            userError.setText(FinanceManagementStrings.memberShipNumberRequiredText);
+            userError.setVisible(true);
+            return null;
+        }
+        return membershipNumber;
     }
 
     private void prepareFinanceTab(){
         this.clearBillPanel.setVisible(false);
         setErrorsInvisible();
-        populate_finance_tab();
+        populateFinanceTab();
     }
-    private void setErrorsInvisible(){for(JLabel error: errors) error.setVisible(false);}
 
-    private void populate_finance_tab(){
-        int total_amount = database.getTotalAmount();
-        int admin_amount = (int) (total_amount * 0.27),
-                salaries_amount = (int) (total_amount * 0.54),
-                expenses_amount = (int) (total_amount * 0.07);
-        int remaining = total_amount - (admin_amount + salaries_amount + expenses_amount);
-        totalAmount.setText(String.format(FinanceManagementStrings.kshMoneyFormat, total_amount));
-        adminAmount.setText(String.format(FinanceManagementStrings.kshMoneyFormat, admin_amount));
-        salariesAmount.setText(String.format(FinanceManagementStrings.kshMoneyFormat, salaries_amount));
-        miscAmounts.setText(String.format(FinanceManagementStrings.kshMoneyFormat, expenses_amount));
-        devAmount.setText(String.format(FinanceManagementStrings.kshMoneyFormat, remaining));
-    }
+    private void setErrorsInvisible(){for(JLabel error: errors) error.setVisible(false);}
 }

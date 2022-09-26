@@ -1,7 +1,9 @@
 package MemberRegistrationPanel;
 
 import Connections.Database;
-import Tools.Types.*;
+import Entities.Member;
+import Entities.MemberHandler;
+import Errors.RegisteringIncompleteMember;
 import javax.swing.*;
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -28,10 +30,24 @@ public class MemberRegister {
     private JLabel occupationError;
     public JButton backButton;
     private JPanel formPanel;
-    private final JLabel[] errors = {fnError, surnameError, phoneError,
-            IDError, occupationError, resAddressError, submitError};
-    private final JTextField[] fields = {
-            firstName, surname, phoneNumber, nationalID, resAddress, occupation};
+    private MemberHandler memberHandler;
+    private final JLabel[] errorLabels = {
+            fnError,
+            surnameError,
+            phoneError,
+            IDError,
+            occupationError,
+            resAddressError,
+            submitError
+    };
+    private final JTextField[] formFields = {
+            firstName,
+            surname,
+            phoneNumber,
+            nationalID,
+            resAddress,
+            occupation
+    };
 
     public MemberRegister(Database database, Logger logger){
         this.database = database;
@@ -39,29 +55,30 @@ public class MemberRegister {
         addEventListeners();
     }
 
-    private void setAllErrorsInvisible(){
-        for(JLabel error: errors)
-            error.setVisible(false);
-    }
-
     private void addEventListeners(){
+
         submitButton.addActionListener( e -> {
-            boolean allCorrect = true;
             setAllErrorsInvisible();
             if(!allFilled())return;
-
-            String fnValue = firstName.getText().trim();
-            String surnameValue = surname.getText().trim();
-            String phoneNumberValue = phoneNumber.getText().trim();
-            String IDValue = nationalID.getText().trim();
-            String occupationValue = occupation.getText().trim();
-            String resAddressValue = resAddress.getText().trim();
+            String firstNameFormValue = firstName.getText().trim();
+            String surnameFormValue = surname.getText().trim();
+            String phoneNumberFormValue = phoneNumber.getText().trim();
+            String nationalIDFormValue = nationalID.getText().trim();
+            String occupationFormValue = occupation.getText().trim();
+            String resAddressFormValue = resAddress.getText().trim();
             String membershipNumber = generate_membershipNumber();
 
-            allCorrect = checkNames(fnValue, surnameValue) && phoneNumberCheck(phoneNumberValue) && idNumberCheck(IDValue);
-            if(!allCorrect)return;
-            String[] final_data = {fnValue, surnameValue, phoneNumberValue, resAddressValue, IDValue, membershipNumber};
-            submitData(final_data);
+            boolean allCorrect = checkNames(firstNameFormValue, surnameFormValue) && phoneNumberCheck(phoneNumberFormValue) && idNumberCheck(nationalIDFormValue);
+            if(!allCorrect) return;
+            Member member = new Member(
+                    firstNameFormValue,
+                    surnameFormValue,
+                    phoneNumberFormValue,
+                    nationalIDFormValue,
+                    resAddressFormValue,
+                    membershipNumber
+            );
+            registerNewMember(member);
         });
 
         clearButton.addActionListener( e -> {
@@ -69,16 +86,19 @@ public class MemberRegister {
         });
     }
 
-    private void submitData(String[] data){
-        QueryProgress queryProgress = this.database.addMember(data);
-        if(queryProgress == QueryProgress.ERROR){
-           submitError.setText(MemberRegistrationStrings.dataSubmissionErrorText);
-           submitError.setVisible(true);
-        }else{
-            clearAll();
-            database.carryTransaction(2000, 1);
+    private void registerNewMember(Member member){
+        boolean memberHasBeenRegistered = false;
+        try {
+            memberHasBeenRegistered = this.memberHandler.registerNewMember(member);
+        } catch (RegisteringIncompleteMember registeringIncompleteMemberException) {
+            showRegistrationError();
+        }
+        if (!memberHasBeenRegistered) {
+            showRegistrationError();
+        }else {
             JOptionPane.showMessageDialog(memberRegister, MemberRegistrationStrings.memberRegistrationSuccessText);
         }
+
     }
     private boolean checkNames(String firstName, String surname){
         if(!(Pattern.matches( "[a-zA-Z]+", firstName))) {
@@ -113,7 +133,6 @@ public class MemberRegister {
             return false;
 
         }
-
         if (database.entityExists(phoneNumber, "members", "phone_number")){
             phoneError.setVisible(true);
             phoneError.setText(MemberRegistrationStrings.phoneNumberInUseErrorText);
@@ -153,11 +172,11 @@ public class MemberRegister {
     private boolean allFilled(){
         int i = 0;
         boolean allCorrect = true;
-        for(JTextField field: this.fields){
+        for(JTextField field: this.formFields){
             if(field.getText().trim().equals(MemberRegistrationStrings.NO_TEXT)){
                 allCorrect = false;
-                errors[i].setVisible(true);
-                errors[i].setText(MemberRegistrationStrings.fieldErrors[i]);
+                errorLabels[i].setVisible(true);
+                errorLabels[i].setText(MemberRegistrationStrings.fieldErrors[i]);
             }
             i++;
         }
@@ -165,7 +184,17 @@ public class MemberRegister {
     }
 
     private void clearAll(){
-        for(JTextField field: fields)
+        for(JTextField field: formFields)
             field.setText(MemberRegistrationStrings.NO_TEXT);
+    }
+
+    private void setAllErrorsInvisible(){
+        for(JLabel error: errorLabels)
+            error.setVisible(false);
+    }
+
+    private void showRegistrationError() {
+        submitError.setVisible(true);submitError.setText(MemberRegistrationStrings.dataSubmissionErrorText);
+        submitError.setVisible(true);
     }
 }

@@ -22,7 +22,11 @@ public class LandingPage {
     VideoRegister videoRegister;
     BorrowVideo borrowVideo;
     FinanceManager financeManager;
-    JButton memberRegistrationBackButton, videoRegistrationBackButton, borrowVideoHomeButton, financesHomeBackButton;
+    JButton memberRegistrationBackButton;
+    JButton videoRegistrationBackButton;
+    JButton borrowVideoHomeButton;
+    JButton borrowVideoBackButton;
+    JButton financesHomeBackButton;
     private final JFrame hostApp;
     private final Logger logger;
 
@@ -44,15 +48,16 @@ public class LandingPage {
 
         this.memberRegistrationBackButton = memberRegister.backButton;
         this.videoRegistrationBackButton = videoRegister.backButton;
-        this.borrowVideoHomeButton = borrowVideo.homeButton;
         this.financesHomeBackButton = financeManager.HomeButton;
+        this.borrowVideoBackButton = borrowVideo.backButton;
+        this.borrowVideoHomeButton = borrowVideo.homeButton;
     }
 
     public void add_eventListener(){
-        this.borrowVideoButton.addActionListener( e -> {
+        this.borrowVideoBackButton.addActionListener( e -> {
             int res = JOptionPane.showConfirmDialog(this.videoBorrowPanel, LandingPageStrings.landingPageExitConfirmationText);
             if(res == 0){
-                this.borrowVideo.authenticateUser();
+                this.borrowVideo.launchAuthenticationPanel();
                 this.replace_panels(this.landingPage, this.videoBorrowPanel);
             }
         });
@@ -79,6 +84,7 @@ public class LandingPage {
         this.checkFinances.addActionListener( e -> {
             this.replace_panels(this.financePanel, this.landingPage);
         });
+
         this.financesHomeBackButton.addActionListener(e -> {
             this.replace_panels(this.landingPage, this.financePanel);
         });
