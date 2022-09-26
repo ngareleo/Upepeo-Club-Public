@@ -1,6 +1,5 @@
 package FinancesManagementPanel;
 
-import Connections.Queries;
 import Strings.Strings;
 
 public class FinanceManagementStrings extends Strings {
