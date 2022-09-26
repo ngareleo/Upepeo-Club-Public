@@ -1,4 +1,4 @@
-package BorrowVideoPanel;
+package Panels.VideoRegistrationPanel.BorrowVideoPanel;
 
 import Strings.Strings;
 

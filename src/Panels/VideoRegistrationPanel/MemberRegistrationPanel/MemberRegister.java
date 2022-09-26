@@ -1,4 +1,4 @@
-package MemberRegistrationPanel;
+package Panels.VideoRegistrationPanel.MemberRegistrationPanel;
 
 import Connections.Database;
 import Entities.Member;

@@ -1,4 +1,4 @@
-package LandingPanel;
+package Panels.VideoRegistrationPanel.LandingPanel;
 
 import Strings.Strings;
 

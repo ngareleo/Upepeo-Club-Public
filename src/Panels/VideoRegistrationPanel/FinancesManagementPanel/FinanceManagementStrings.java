@@ -1,4 +1,4 @@
-package FinancesManagementPanel;
+package Panels.VideoRegistrationPanel.FinancesManagementPanel;
 
 import Strings.Strings;
 

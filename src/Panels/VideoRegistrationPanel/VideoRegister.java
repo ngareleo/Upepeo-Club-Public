@@ -1,4 +1,4 @@
-package VideoRegistrationPanel;
+package Panels.VideoRegistrationPanel;
 
 import Connections.Database;
 import Entities.Video;
