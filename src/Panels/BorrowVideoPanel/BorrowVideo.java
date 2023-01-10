@@ -1,4 +1,4 @@
-package Panels.VideoRegistrationPanel.BorrowVideoPanel;
+package Panels.BorrowVideoPanel;
 
 import Connections.Database;
 import Entities.Member;
