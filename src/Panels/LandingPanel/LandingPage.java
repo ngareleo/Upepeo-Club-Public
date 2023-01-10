@@ -1,9 +1,10 @@
-package Panels.VideoRegistrationPanel.LandingPanel;
+package Panels.LandingPanel;
 
-import Panels.VideoRegistrationPanel.BorrowVideoPanel.BorrowVideo;
+
 import Connections.Database;
-import Panels.VideoRegistrationPanel.FinancesManagementPanel.FinanceManager;
-import Panels.VideoRegistrationPanel.MemberRegistrationPanel.MemberRegister;
+import Panels.BorrowVideoPanel.BorrowVideo;
+import Panels.FinancesManagementPanel.FinanceManager;
+import Panels.MemberRegistrationPanel.MemberRegister;
 import Panels.VideoRegistrationPanel.VideoRegister;
 import javax.swing.*;
 import java.util.logging.Logger;

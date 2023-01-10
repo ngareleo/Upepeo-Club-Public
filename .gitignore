@@ -2,5 +2,6 @@ out/
 .idea/
 UpepeoClub.iml
 res/upepeo.sqlite
+res/META-INF/
 res/sqlite-jdbc-3.34.0.jar
 

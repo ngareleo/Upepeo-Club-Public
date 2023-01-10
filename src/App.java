@@ -1,5 +1,5 @@
 import Connections.Database;
-import Panels.VideoRegistrationPanel.LandingPanel.LandingPage;
+import Panels.LandingPanel.LandingPage;
 import Strings.MainAppStrings;
 import javax.swing.*;
 import java.io.File;

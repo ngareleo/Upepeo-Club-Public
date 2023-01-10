@@ -1,4 +1,4 @@
-package Panels.VideoRegistrationPanel.MemberRegistrationPanel;
+package Panels.MemberRegistrationPanel;
 
 import Strings.Strings;
 
